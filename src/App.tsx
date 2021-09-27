@@ -1,44 +1,45 @@
-import { max } from 'd3-array';
-import { axisBottom, axisLeft } from 'd3-axis';
-import { scaleBand, scaleLinear } from 'd3-scale';
-import { select, Selection } from 'd3-selection';
 import { FC, useEffect, useRef, useState } from 'react';
 import './App.css';
+import { select, Selection } from 'd3-selection';
+import { scaleBand, scaleLinear } from 'd3-scale';
+import { max } from 'd3-array';
 
-const dimensions = {
-    width: 800,
-    height: 500,
-    chartWidth: 700,
-    chartHeight: 400,
-    marginLeft: 100,
-};
-
-const data = [
+const initialData = [
     {
         name: 'foo',
-        number: 9000,
+        units: 32,
     },
     {
         name: 'bar',
-        number: 2345,
+        units: 67,
     },
     {
         name: 'baz',
-        number: 4543,
+        units: 81,
     },
     {
         name: 'hog',
-        number: 8766,
+        units: 38,
     },
     {
         name: 'pig',
-        number: 1723,
+        units: 28,
+    },
+    {
+        name: 'jim',
+        units: 59,
     },
 ];
 
-const App: FC = () => {
-    const ref = useRef<SVGSVGElement | null>(null);
+const dimensions = {
+    width: 900,
+    height: 600,
+};
 
+const App: FC = () => {
+    const [data, setData] = useState(initialData);
+
+    const ref = useRef<SVGSVGElement | null>(null);
     const [selection, setSelection] = useState<null | Selection<
         SVGSVGElement | null,
         unknown,
@@ -47,65 +48,50 @@ const App: FC = () => {
     >>(null);
 
     const y = scaleLinear()
-        .domain([0, max(data, (d) => d.number) ?? 10000])
-        .range([0, dimensions.chartHeight]);
+        .domain([0, max(data, (d) => d.units)!])
+        // .range([0, dimensions.height]);
+        .range([dimensions.height, 0]);
 
     const x = scaleBand()
-        .domain(data.map(({ name }) => name))
-        .range([0, dimensions.chartWidth])
-        .paddingInner(0.3);
-
-    const yAxis = axisLeft(y)
-        .ticks(3)
-        .tickFormat((d) => `$${d}`);
-    const xAxis = axisBottom(x);
+        .domain(data.map((d) => d.name))
+        .range([0, dimensions.width])
+        .paddingInner(0.05);
 
     useEffect(() => {
         if (!selection) {
             setSelection(select(ref.current));
         } else {
+            //! upside down
             // selection
+            //     .selectAll('rect')
+            //     .data(data)
+            //     .enter()
             //     .append('rect')
-            //     .attr('width', dimensions.width)
-            //     .attr('height', dimensions.height)
-            //     .attr('fill', 'lightblue');
+            //     .attr('width', x.bandwidth)
+            //     .attr('height', (d) => y(d.units))
+            //     .attr('x', (d) => x(d.name)!)
+            //     .attr('fill', 'orange');
 
-            const xAxisGroup = selection
-                .append('g')
-                .attr(
-                    'transform',
-                    `translate(${dimensions.marginLeft}, ${dimensions.chartHeight})`
-                )
-                .call(xAxis);
-
-            const yAxisGroup = selection
-                .append('g')
-                .attr('transform', `translate(${dimensions.marginLeft}, ${0})`)
-                .call(yAxis);
-
+            //! right side up
             selection
-                .append('g')
-                .attr('transform', `translate(${dimensions.marginLeft}, 0)`) // like css transform/translate
                 .selectAll('rect')
                 .data(data)
                 .enter()
                 .append('rect')
                 .attr('width', x.bandwidth)
-                .attr('x', (d) => x(d.name)!) // ts bang!
-                .attr('fill', 'orange')
-                .attr('height', (d) => y(d.number));
+                .attr('height', (d) => dimensions.height - y(d.units))
+                .attr('x', (d) => x(d.name)!)
+                .attr('y', (d) => y(d.units))
+                .attr('fill', 'orange');
         }
-    }, [selection]); // x, y?
-
+    }, [selection]);
     return (
         <div className="App">
-            <svg ref={ref} width={dimensions.width} height={dimensions.height}>
-                {/* <g>
-                    <rect></rect>
-                    <rect></rect>
-                    <rect></rect>
-                </g> */}
-            </svg>
+            <svg
+                ref={ref}
+                width={dimensions.width}
+                height={dimensions.height}
+            ></svg>
         </div>
     );
 };
