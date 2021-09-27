@@ -4,6 +4,19 @@ import { select, Selection } from 'd3-selection';
 import { scaleBand, scaleLinear } from 'd3-scale';
 import { max } from 'd3-array';
 import randomstring from 'randomstring';
+import styled from 'styled-components';
+import 'd3-transition';
+import { easeElastic } from 'd3-ease';
+
+const Button = styled.button`
+    background-color: blue;
+    transition-duration: 500ms;
+    transition-timing-function: ease-in-out;
+
+    &:hover {
+        background-color: orange;
+    }
+`;
 
 const initialData = [
     {
@@ -62,28 +75,23 @@ const App: FC = () => {
         if (!selection) {
             setSelection(select(ref.current));
         } else {
-            //! upside down
-            // selection
-            //     .selectAll('rect')
-            //     .data(data)
-            //     .enter()
-            //     .append('rect')
-            //     .attr('width', x.bandwidth)
-            //     .attr('height', (d) => y(d.units))
-            //     .attr('x', (d) => x(d.name)!)
-            //     .attr('fill', 'orange');
-
-            //! right side up
             selection
                 .selectAll('rect')
                 .data(data)
                 .enter()
                 .append('rect')
                 .attr('width', x.bandwidth)
-                .attr('height', (d) => dimensions.height - y(d.units))
+                .attr('height', 0)
+                .attr('fill', 'orange')
                 .attr('x', (d) => x(d.name)!)
-                .attr('y', (d) => y(d.units))
-                .attr('fill', 'orange');
+                .attr('height', 0)
+                .attr('y', dimensions.height)
+                .transition()
+                .duration(500)
+                .delay((_, i) => i * 100)
+                .ease(easeElastic)
+                .attr('height', (d) => dimensions.height - y(d.units))
+                .attr('y', (d) => y(d.units));
         }
     }, [selection]);
 
@@ -101,9 +109,18 @@ const App: FC = () => {
 
             const rects = selection.selectAll('rect').data(data);
 
-            rects.exit().remove();
+            rects
+                .exit()
+                .transition()
+                .duration(300)
+                .attr('y', dimensions.height)
+                .attr('height', 0)
+                .remove();
 
             rects
+                .transition()
+                .duration(300)
+                .delay(100)
                 .attr('width', x.bandwidth)
                 .attr('height', (d) => dimensions.height - y(d.units))
                 .attr('x', (d) => x(d.name)!)
@@ -114,10 +131,18 @@ const App: FC = () => {
                 .enter()
                 .append('rect')
                 .attr('width', x.bandwidth)
-                .attr('height', (d) => dimensions.height - y(d.units))
+                .attr('height', 0)
+                .attr('fill', 'orange')
                 .attr('x', (d) => x(d.name)!)
+                .attr('y', dimensions.height)
+                .attr('height', 0)
+                .transition()
+                .duration(500)
+                .delay(250)
+                .ease(easeElastic)
+
                 .attr('y', (d) => y(d.units))
-                .attr('fill', 'orange');
+                .attr('height', (d) => dimensions.height - y(d.units));
         }
     }, [data]);
 
