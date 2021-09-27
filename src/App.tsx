@@ -1,31 +1,53 @@
 import './App.css';
-import { FC, useRef, useEffect } from 'react';
-// import * as d3 from 'd3';
-import { select, selectAll } from 'd3-selection';
+import { FC, useEffect, useRef, useState } from 'react';
+import { select, Selection } from 'd3-selection';
+import { groups } from 'd3-array';
+
+const data = [
+    { units: 150, color: 'purple' },
+    { units: 100, color: 'red' },
+    { units: 50, color: 'blue' },
+    { units: 70, color: 'teal' },
+    { units: 120, color: 'orange' },
+];
 
 const App: FC = () => {
-    const svgRef = useRef<SVGSVGElement | null>(null);
+    const ref = useRef<SVGSVGElement | null>(null);
+
+    const [selection, setSelection] = useState<Selection<
+        SVGSVGElement | null,
+        unknown,
+        null,
+        undefined
+    > | null>(null);
 
     useEffect(() => {
-        console.log(select(svgRef.current));
-        // select(svgRef.current)
-        //     .append('rect')
-        //     .attr('width', 100)
-        //     .attr('height', 100)
-        //     .attr('fill', 'blue');
+        if (!selection) {
+            setSelection(select(ref.current));
+        } else {
+            const rects = selection
+                .selectAll('rect')
+                .data(data)
+                .attr('width', 100)
+                .attr('height', (d) => d.units)
+                .attr('fill', (d) => d.color)
+                .attr('x', (_, i) => i * 100);
 
-        selectAll('rect')
-            .attr('width', 100)
-            .attr('height', 100)
-            .attr('fill', 'blue')
-            .attr('x', (_, i) => i * 100);
-    }, []);
+            rects
+                .enter()
+                .append('rect')
+                .attr('width', 100)
+                .attr('height', (d) => d.units)
+                .attr('fill', (d) => d.color)
+                .attr('x', (_, i) => i * 100);
+        }
+    }, [selection]);
     return (
         <div className="App">
-            <svg ref={svgRef}>
-                <rect />
-                <rect />
-                <rect />
+            <svg ref={ref} width={500}>
+                <rect> </rect>
+                <rect> </rect>
+                <rect> </rect>
             </svg>
         </div>
     );
